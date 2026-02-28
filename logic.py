@@ -1,6 +1,7 @@
 import telebot
-from datetime import datetime
+import datetime
 from config import token
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 bot = telebot.TeleBot(token)
 
@@ -58,8 +59,8 @@ def get_time_to_next_lesson():
     return "Ближайших уроков нет"
 
 def get_button():
-    from telebot.types import ReplyKeyboardMarkup, KeyboardButton
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add(KeyboardButton("Расписание на сегодня"))
     markup.add(KeyboardButton("Когда следующий урок"))
     return markup
+
