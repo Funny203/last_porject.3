@@ -1,33 +1,65 @@
 import telebot
-from telebot import types
-import random
+from datetime import datetime
+from config import token
 
+bot = telebot.TeleBot(token)
 
-wlc_message = "Это бот онлайн-школы\nНажмите кнопку ниже чтобы получить расписание."
+schedule = {
+    "Понедельник": ["Математика", "Русский язык", "Английский язык", "Физика", "История"],
+    "Вторник": ["Алгебра", "Геометрия", "Литература", "Химия", "Информатика"],
+    "Среда": ["Биология", "География", "Обществознание", "Математика", "Английский язык"],
+    "Четверг": ["Физика", "Русский язык", "Литература", "История", "ОБЗР"],
+    "Пятница": ["Физра", "Информатика", "Химия", "Биология", "География"],
+    "Суббота": [],
+    "Воскресенье": []
+}
 
-subjects = ["Математика", "Русский язык", "Английский язык", "Физика", "Химия", 
-            "История", "Информатика", "Литература", "Биология", "География", 
-            "Обществознание", "Физ-ра", "ОБЗР"]
+lesson_starts = ["09:00", "09:50", "10:40", "11:30", "12:20", "13:10"]
+days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"]
 
+def get_schedule_text():
+    now = datetime.now()
+    today = days[now.weekday()]
+    
+    if not schedule[today]:
+        return f"{today}\nСегодня выходной"
+    
+    text = f"{today}\n\n"
+    for i, lesson in enumerate(schedule[today]):
+        text += f"{i+1}. {lesson} ({lesson_starts[i]})\n"
+    
+    return text
 
+def get_time_to_next_lesson():
+    now = datetime.now()
+    current_day_index = now.weekday()
+    current_time = now.time()
+    
+    for day_offset in range(7):
+        check_day_index = (current_day_index + day_offset) % 7
+        check_day = days[check_day_index]
+        
+        if schedule[check_day]:
+            for i in range(len(schedule[check_day])):
+                lesson_time = datetime.strptime(lesson_starts[i], "%H:%M").time()
+                
+                if day_offset == 0 and current_time >= lesson_time:
+                    continue
+                
+                if day_offset == 0:
+                    day_text = "сегодня"
+                elif day_offset == 1:
+                    day_text = "завтра"
+                else:
+                    day_text = check_day
+                
+                return f"Следующий урок: {schedule[check_day][i]} ({day_text} в {lesson_starts[i]})"
+    
+    return "Ближайших уроков нет"
 
-
-def generate_schedule():
-    lessons = random.randint(4, 6)
-    random_subjects = random.sample(subjects, lessons)#random sample рандомайзер без повторений
-    schedule = "Расписание уроков на сегодня:\n"
-    times = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00"]
-    for i in range(lessons):
-        schedule += f"{times[i]}-{random_subjects[i]}\n"
-        """к изначальной переменной которая состоит из текста 
-        добавляется операция сложения переменных(элементов из списка по i) 
-        обозначенных фигрной скобкой где i является общим количеством уроков"""
-    return schedule
-
-
-def get_keyboard():
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)#изменение высоты кнопки
-    x = types.KeyboardButton("Получить расписание")
-    markup.add(x)
+def get_button():
+    from telebot.types import ReplyKeyboardMarkup, KeyboardButton
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add(KeyboardButton("Расписание на сегодня"))
+    markup.add(KeyboardButton("Когда следующий урок"))
     return markup
-
